@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	utils "github.com/liudding/go-llm-api/internal"
 	"io"
 	"net/http"
 	neturl "net/url"
+
+	utils "github.com/gtkit/llm-baidu/internal"
 )
 
 // Client is OpenAI GPT-3 API client.

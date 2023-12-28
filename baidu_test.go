@@ -1,9 +1,9 @@
-package baidu_test
+package baidu
 
 import (
-	. "github.com/liudding/go-llm-api/baidu"
-	"github.com/liudding/go-llm-api/internal/test"
 	"net/http"
+
+	"github.com/gtkit/llm-baidu/internal/test"
 )
 
 func setupBaiduAITestServer() (client *Client, server *test.ServerTest, teardown func()) {

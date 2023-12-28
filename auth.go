@@ -36,35 +36,30 @@ func (t *AuthToken) IsValid() bool {
 }
 
 // CreateAccessToken — API call to Create a completion for the chat message.
-func (c *Client) CreateAccessToken(
-	ctx context.Context,
-) (response AuthResponse, err error) {
-
-	return c.CreateAccessToken2(ctx, AuthRequest{
+func (c *Client) CreateAccessToken(ctx context.Context) (response AuthResponse, err error) {
+	return c.RequestAccessToken(ctx, AuthRequest{
 		GrantType:    c.config.GrantType,
 		ClientId:     c.config.ClientId,
 		ClientSecret: c.config.ClientSecret,
 	})
 }
 
-// CreateAccessToken2 — API call to Create a completion for the chat message.
-func (c *Client) CreateAccessToken2(
-	ctx context.Context,
-	request AuthRequest,
-) (response AuthResponse, err error) {
-
+// RequestAccessToken — API call to Create a completion for the chat message.
+func (c *Client) RequestAccessToken(ctx context.Context, request AuthRequest) (response AuthResponse, err error) {
 	api := authApi
 	if c.config.AuthAPI != "" {
 		api = c.config.AuthAPI
 	}
 
-	req, err := c.newRequest(ctx, http.MethodPost, api, withQuery(map[string]string{
+	query := withQuery(map[string]string{
 		"client_id":     request.ClientId,
 		"client_secret": request.ClientSecret,
 		"grant_type":    request.GrantType,
-	}))
-	if err != nil {
+	})
+	ct := withContentType("application/json")
 
+	req, err := c.newRequest(ctx, http.MethodPost, api, query, ct)
+	if err != nil {
 		return
 	}
 

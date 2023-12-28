@@ -4,10 +4,11 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	utils "github.com/liudding/go-llm-api/internal"
-	"github.com/liudding/go-llm-api/internal/sse"
 	"io"
 	"net/http"
+
+	utils "github.com/gtkit/llm-baidu/internal"
+	"github.com/gtkit/llm-baidu/internal/sse"
 )
 
 type streamReader struct {

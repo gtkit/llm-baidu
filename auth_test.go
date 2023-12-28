@@ -1,21 +1,20 @@
-package baidu_test
+package baidu
 
 import (
 	"context"
-	. "github.com/liudding/go-llm-api/baidu"
 	"testing"
 )
 
 func TestCreateAccessToken(t *testing.T) {
 	ctx := context.Background()
 
-	client := NewClient("xxxx", "yyyy", false)
+	client := NewClient("CqArY3Y4IQMFFkP04U9l4NRI", "BnW6GfYNqMGNmXrvS8sGg2NEu71Oohnr", false)
 	resp, err := client.CreateAccessToken(ctx)
 
 	if err != nil {
 		println(err.Error())
 	}
 
-	println(resp.AccessToken)
+	println("AccessToken: ", resp.AccessToken)
 
 }

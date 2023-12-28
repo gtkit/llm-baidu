@@ -2,8 +2,9 @@ package baidu //nolint:testpackage // testing private field
 
 import (
 	"errors"
-	utils "github.com/liudding/go-llm-api/internal"
 	"testing"
+
+	utils "github.com/gtkit/llm-baidu/internal"
 )
 
 var errTestUnmarshalerFailed = errors.New("test unmarshaler failed")

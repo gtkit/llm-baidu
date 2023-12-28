@@ -5,7 +5,8 @@ import (
 )
 
 const (
-	baiduaiAPIURLv1                = "https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop"
+	// baiduaiAPIURLv1                = "https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop"
+	baiduaiAPIURLv1                = "https://aip.baidubce.com/oauth/2.0/token"
 	defaultEmptyMessagesLimit uint = 300
 )
 

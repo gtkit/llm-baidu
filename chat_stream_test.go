@@ -1,15 +1,15 @@
-package baidu_test
+package baidu
 
 import (
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	. "github.com/liudding/go-llm-api/baidu"
-	"github.com/liudding/go-llm-api/internal/test/checks"
 	"io"
 	"net/http"
 	"testing"
+
+	"github.com/gtkit/llm-baidu/internal/test/checks"
 )
 
 func TestCreateChatCompletionRealServer(t *testing.T) {
