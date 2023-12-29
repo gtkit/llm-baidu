@@ -1,4 +1,4 @@
-package internal_test //nolint:testpackage // testing private field
+package internal //nolint:testpackage // testing private field
 
 import (
 	"bytes"
