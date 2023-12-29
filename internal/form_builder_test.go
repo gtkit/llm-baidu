@@ -6,7 +6,6 @@ import (
 	"os"
 	"testing"
 
-	. "github.com/gtkit/llm-baidu/internal"
 	"github.com/gtkit/llm-baidu/internal/test"
 	"github.com/gtkit/llm-baidu/internal/test/checks"
 )

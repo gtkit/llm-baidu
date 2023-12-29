@@ -2,6 +2,7 @@ package baidu
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"time"
 )
@@ -68,13 +69,15 @@ func (c *Client) RequestAccessToken(ctx context.Context, request AuthRequest) (r
 }
 
 // AutoHandleAccessToken — API call to Create a completion for the chat message.
-func (c *Client) AutoHandleAccessToken() (response AuthResponse, err error) {
+func (c *Client) AutoHandleAccessToken(ctx context.Context) error {
 	if c.authToken.IsValid() {
-		return
+		return nil
 	}
 
-	ctx := context.Background()
 	resp, err := c.CreateAccessToken(ctx)
+	if err != nil {
+		return errors.New("create access token error: " + err.Error())
+	}
 
 	c.authToken = AuthToken{
 		token:     resp.AccessToken,
@@ -82,5 +85,5 @@ func (c *Client) AutoHandleAccessToken() (response AuthResponse, err error) {
 		expiresIn: resp.ExpiresIn,
 	}
 
-	return resp, err
+	return nil
 }

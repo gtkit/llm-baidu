@@ -15,6 +15,8 @@ import (
 	utils "github.com/gtkit/llm-baidu/internal"
 )
 
+const ekmatch = `^([a-zA-z_-]+):`
+
 var (
 	headerId    = []byte("id:")
 	headerEvent = []byte("event:")
@@ -25,7 +27,7 @@ var (
 var (
 	ErrTooManyEmptyStreamMessages = errors.New("stream has sent too many empty messages")
 
-	matchExtraKeyRegex, _ = regexp.Compile(`^([a-zA-z_-]+):`)
+	matchExtraKeyRegex, _ = regexp.Compile(ekmatch)
 )
 
 type Event struct {

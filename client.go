@@ -103,7 +103,9 @@ func (c *Client) newRequest(ctx context.Context, method, url string, setters ...
 }
 
 func (c *Client) newRequestWithToken(ctx context.Context, method, url string, setters ...requestOption) (*http.Request, error) {
-	c.AutoHandleAccessToken()
+	if err := c.AutoHandleAccessToken(ctx); err != nil {
+		return nil, err
+	}
 
 	setters = append(setters, withQuery(map[string]string{
 		"access_token": c.authToken.token,

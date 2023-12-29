@@ -2,19 +2,20 @@ package baidu
 
 import (
 	"context"
+	"log/slog"
 	"testing"
 )
 
 func TestCreateAccessToken(t *testing.T) {
 	ctx := context.Background()
 
-	client := NewClient("", "", false)
+	client := NewClient(ClientId, ClientSecret, false)
 	resp, err := client.CreateAccessToken(ctx)
 
 	if err != nil {
-		println(err.Error())
+		slog.Error(err.Error())
 	}
 
-	println("AccessToken: ", resp.AccessToken)
+	slog.Info("", "AccessToken", resp.AccessToken)
 
 }
