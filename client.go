@@ -5,13 +5,31 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	neturl "net/url"
 
 	utils "github.com/gtkit/llm-baidu/internal"
 )
 
-// Client is OpenAI GPT-3 API client.
+type ChatCompletion interface {
+	// CreateChatCompletionStream sse 流式
+	CreateChatCompletionStream(ctx context.Context, request ChatCompletionRequest, args ...any) (stream *ChatCompletionStream, err error) //nolint:lll
+	CreateChatCompletion(ctx context.Context, request ChatCompletionRequest, args ...any) (response ChatCompletionResponse, err error)    //nolint:lll
+	CreateAccessToken(ctx context.Context) (response AuthResponse, err error)
+	RequestAccessToken(ctx context.Context, request AuthRequest) (response AuthResponse, err error)
+	AutoHandleAccessToken(ctx context.Context) error
+	newRequest(ctx context.Context, method, url string, setters ...requestOption) (*http.Request, error)
+	newRequestWithToken(ctx context.Context, method, url string, setters ...requestOption) (*http.Request, error)
+	sendRequest(req *http.Request, v any) error
+	sendRequestRaw(req *http.Request) (body io.ReadCloser, err error)
+	sendRequestStream(req *http.Request) (StreamReader, error)
+	setCommonHeaders(req *http.Request)
+	fullURL(model string) string
+	handleErrorResp(resp *http.Response) error
+}
+
+// Client 千帆大模型 client.
 type Client struct {
 	config ClientConfig
 
@@ -21,23 +39,23 @@ type Client struct {
 	authToken AuthToken
 }
 
-// NewClient creates new OpenAI API client.
-func NewClient(clientId string, clientSecret string, auto bool) *Client {
+// NewClient creates new API client.
+func NewClient(clientId, clientSecret string, auto bool) ChatCompletion {
 	config := DefaultConfig(clientId, clientSecret, auto)
 	return NewClientWithConfig(config)
 }
 
-// NewClientWithAuth creates new API client.
-func NewClientWithAuth(authToken string) *Client {
-	config := DefaultConfigWithAuth(authToken)
+// NewClientWithToken creates new API client.
+func NewClientWithToken(authToken string) ChatCompletion {
+	config := ConfigWithToken(authToken)
 	return NewClientWithConfig(config)
 }
 
 // NewClientWithConfig creates new OpenAI API client for specified config.
-func NewClientWithConfig(config ClientConfig) *Client {
+func NewClientWithConfig(config ClientConfig) ChatCompletion {
 	return &Client{
 		config:         config,
-		requestBuilder: utils.NewRequestBuilder(),
+		requestBuilder: utils.NewRequestBuilder(), // new request
 		createFormBuilder: func(body io.Writer) utils.FormBuilder {
 			return utils.NewFormBuilder(body)
 		},
@@ -129,7 +147,12 @@ func (c *Client) sendRequest(req *http.Request, v any) error {
 		return err
 	}
 
-	defer res.Body.Close()
+	defer func(Body io.ReadCloser) {
+		if err = Body.Close(); err != nil {
+			slog.Error("http response body close error: ", err)
+			return
+		}
+	}(res.Body)
 
 	if isFailureStatusCode(res) {
 		return c.handleErrorResp(res)
@@ -151,20 +174,20 @@ func (c *Client) sendRequestRaw(req *http.Request) (body io.ReadCloser, err erro
 	return resp.Body, nil
 }
 
-func sendRequestStream(client *Client, req *http.Request) (*streamReader, error) {
+func (c *Client) sendRequestStream(req *http.Request) (StreamReader, error) {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "text/event-stream")
 	req.Header.Set("Cache-Control", "no-cache")
 	req.Header.Set("Connection", "keep-alive")
 
-	resp, err := client.config.HTTPClient.Do(req) //nolint:bodyclose // body is closed in stream.Close()
+	resp, err := c.config.HTTPClient.Do(req) //nolint:bodyclose // body is closed in stream.Close()
 	if err != nil {
 		return new(streamReader), err
 	}
 	if isFailureStatusCode(resp) {
-		return new(streamReader), client.handleErrorResp(resp)
+		return new(streamReader), c.handleErrorResp(resp)
 	}
-	return newStreamReader(resp, client.config.EmptyMessagesLimit), nil
+	return newStreamReader(resp, c.config.EmptyMsgLimit), nil
 }
 
 func (c *Client) setCommonHeaders(req *http.Request) {
@@ -199,7 +222,7 @@ func decodeString(body io.Reader, output *string) error {
 
 // fullURL returns full URL for request.
 func (c *Client) fullURL(model string) string {
-	urlSuffix := chatCompletionsSuffix
+	urlSuffix := ErnieBotTurbo
 	if model != "" {
 		urlSuffix = "/chat/" + model
 	}

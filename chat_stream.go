@@ -2,6 +2,7 @@ package baidu
 
 import (
 	"context"
+	"errors"
 	"net/http"
 )
 
@@ -11,7 +12,7 @@ type ChatCompletionStream struct {
 	*streamReader
 }
 
-// CreateChatCompletionStream — API call to create a chat completion streaming
+// CreateChatCompletionStream — API call to create a chat completion streaming.
 func (c *Client) CreateChatCompletionStream(
 	ctx context.Context,
 	request ChatCompletionRequest,
@@ -41,12 +42,16 @@ func (c *Client) CreateChatCompletionStream(
 		return nil, err
 	}
 
-	resp, err := sendRequestStream(c, req)
+	resp, err := c.sendRequestStream(req)
 	if err != nil {
 		return
 	}
+	r, ok := resp.(*streamReader)
+	if !ok {
+		return nil, errors.New("streamReader 响应类型错误")
+	}
 	stream = &ChatCompletionStream{
-		streamReader: resp,
+		streamReader: r,
 	}
 	return
 }

@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"testing"
 
@@ -13,7 +13,7 @@ import (
 )
 
 func TestCreateChatCompletionRealServer(t *testing.T) {
-	client := NewClient("xxxx", "yyyy", true)
+	client := NewClient(ClientId, ClientSecret, true)
 	resp, err := client.CreateChatCompletion(context.Background(), ChatCompletionRequest{
 		Messages: []ChatCompletionMessage{
 			{
@@ -25,40 +25,48 @@ func TestCreateChatCompletionRealServer(t *testing.T) {
 	}, "eb-instant")
 	checks.NoError(t, err, "CreateCompletionStream returned error")
 
-	println(resp.ErrorMsg)
-	println(resp.Result)
+	// println(resp.ErrorMsg)
+	// println(resp.Result)
+
+	t.Log(resp.ErrorMsg)
+	t.Log(resp.Result)
 }
 
+// TestCreateChatCompletionStreamOnRealServer.
 func TestCreateChatCompletionStreamOnRealServer(t *testing.T) {
-	client := NewClient("xxxx", "yyyy", true)
-	stream, err := client.CreateChatCompletionStream(context.Background(), ChatCompletionRequest{
-		Messages: []ChatCompletionMessage{
-			{
-				Role:    ChatMessageRoleUser,
-				Content: "Hello!",
-			},
+	client := NewClient(ClientId, ClientSecret, true)
+	// fmt.Printf("---client---- %+v\n", client)
+	slog.Info("new client info")
+
+	prompt := []ChatCompletionMessage{
+		{
+			Role:    ChatMessageRoleUser,
+			Content: "Go 语言发展前景!",
 		},
-		Temperature: 2,
+	}
+
+	stream, err := client.CreateChatCompletionStream(context.Background(), ChatCompletionRequest{
+		Messages:    prompt,
+		Temperature: 1,
 		Stream:      true,
 	})
 	checks.NoError(t, err, "CreateCompletionStream returned error")
 	defer stream.Close()
 
-	fmt.Println("Stream response: ")
 	for {
 		response, err := stream.Recv()
 		if errors.Is(err, io.EOF) {
-			fmt.Printf("\nStream finished: %d %s\n", response.ErrorCode, response.ErrorMsg)
+			// fmt.Printf("\nStream finished: %d %s\n", response.ErrorCode, response.ErrorMsg)
 			return
 		}
 
 		if err != nil {
-			fmt.Printf("\nStream error: %v\n", err)
+			t.Logf("\nStream error: %v\n", err)
 			return
 		}
 
-		fmt.Printf("error: %s\n", response.ErrorMsg)
-		fmt.Printf("resp: %s\n", response.Result)
+		t.Logf("error: %s\n", response.ErrorMsg)
+		t.Logf("resp: %s\n", response.Result)
 	}
 }
 
@@ -71,12 +79,12 @@ func TestCreateChatCompletionStream(t *testing.T) {
 		// Send test responses
 		dataBytes := []byte{}
 		dataBytes = append(dataBytes, []byte("event: message\n")...)
-		//nolint:lll
+
 		data := `{"id":"1","object":"chat.completion","created":1598069254,"result":"response1"}`
 		dataBytes = append(dataBytes, []byte("data: "+data+"\n\n")...)
 
 		dataBytes = append(dataBytes, []byte("event: message\n")...)
-		//nolint:lll
+
 		data = `{"id":"2","object":"chat.completion","created":1598069255,"model":"gpt-3.5-turbo","result":"response2"}`
 		dataBytes = append(dataBytes, []byte("data: "+data+"\n\n")...)
 

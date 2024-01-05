@@ -18,7 +18,7 @@ import (
 const ekmatch = `^([a-zA-z_-]+):`
 
 var (
-	headerId    = []byte("id:")
+	headerID    = []byte("id:")
 	headerEvent = []byte("event:")
 	headerData  = []byte("data:")
 	headerRetry = []byte("retry:")
@@ -27,7 +27,7 @@ var (
 var (
 	ErrTooManyEmptyStreamMessages = errors.New("stream has sent too many empty messages")
 
-	matchExtraKeyRegex, _ = regexp.Compile(ekmatch)
+	matchExtraKeyRegex = regexp.MustCompile(ekmatch)
 )
 
 type Event struct {
@@ -45,8 +45,8 @@ type Event struct {
 }
 
 type EventStreamReader struct {
-	emptyMessagesLimit uint
-	isFinished         bool
+	EmptyMsgLimit uint
+	isFinished    bool
 
 	scanner        *bufio.Scanner
 	encodingBase64 bool
@@ -54,7 +54,7 @@ type EventStreamReader struct {
 	unmarshaler    utils.Unmarshaler
 }
 
-func NewEventStreamReader(stream *bufio.Reader, maxBufferSize int, emptyMessagesLimit uint) *EventStreamReader {
+func NewEventStreamReader(stream *bufio.Reader, maxBufferSize int, emptyMsgLimit uint) *EventStreamReader {
 	scanner := bufio.NewScanner(stream)
 	initBufferSize := minPosInt(4096, maxBufferSize)
 	scanner.Buffer(make([]byte, initBufferSize), maxBufferSize)
@@ -68,7 +68,7 @@ func NewEventStreamReader(stream *bufio.Reader, maxBufferSize int, emptyMessages
 		if i, nlen := containsDoubleNewline(data); i >= 0 {
 			return i + nlen, data[0:i], nil
 		}
-		// If we're at EOF, we have all of the data.
+		// If we're at EOF, we have all the data.
 		if atEOF {
 			return len(data), data, nil
 		}
@@ -79,10 +79,10 @@ func NewEventStreamReader(stream *bufio.Reader, maxBufferSize int, emptyMessages
 	scanner.Split(split)
 
 	return &EventStreamReader{
-		scanner:            scanner,
-		emptyMessagesLimit: emptyMessagesLimit,
-		errAccumulator:     utils.NewErrorAccumulator(),
-		unmarshaler:        &utils.JSONUnmarshaler{},
+		scanner:        scanner,
+		EmptyMsgLimit:  emptyMsgLimit,
+		errAccumulator: utils.NewErrorAccumulator(),
+		unmarshaler:    &utils.JSONUnmarshaler{},
 	}
 }
 
@@ -105,7 +105,7 @@ func (stream *EventStreamReader) processEvent() (*Event, error) {
 	noSpaceMsg := bytes.TrimSpace(msg)
 
 	if err != nil {
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			stream.isFinished = true
 			return nil, io.EOF
 		}
@@ -115,7 +115,7 @@ func (stream *EventStreamReader) processEvent() (*Event, error) {
 
 	if len(noSpaceMsg) < 1 {
 		emptyMessagesCount++
-		if emptyMessagesCount > stream.emptyMessagesLimit {
+		if emptyMessagesCount > stream.EmptyMsgLimit {
 			return nil, ErrTooManyEmptyStreamMessages
 		}
 		return nil, nil
@@ -128,8 +128,8 @@ func (stream *EventStreamReader) processEvent() (*Event, error) {
 	// Split the line by "\n" or "\r", per the spec.
 	for _, line := range bytes.FieldsFunc(msg, func(r rune) bool { return r == '\n' || r == '\r' }) {
 		switch {
-		case bytes.HasPrefix(line, headerId):
-			event.Id = append([]byte(nil), trimHeader(len(headerId), line)...)
+		case bytes.HasPrefix(line, headerID):
+			event.Id = append([]byte(nil), trimHeader(len(headerID), line)...)
 		case bytes.HasPrefix(line, headerData):
 			// The spec allows for multiple data fields per event, concatenated them with "\n".
 			event.Data = append(event.Data[:], append(trimHeader(len(headerData), line), byte('\n'))...)
@@ -164,26 +164,12 @@ func (stream *EventStreamReader) processEvent() (*Event, error) {
 
 		n, err := base64.StdEncoding.Decode(buf, event.Data)
 		if err != nil {
-			err = fmt.Errorf("failed to decode event message: %s", err)
+			err = fmt.Errorf("failed to decode event message: %w", err)
 		}
 		event.Data = buf[:n]
 	}
 	return &event, err
 }
-
-// func (stream *EventStreamReader) unmarshalError() (errResp *zhipu.ErrorResponse) {
-//	errBytes := stream.errAccumulator.Bytes()
-//	if len(errBytes) == 0 {
-//		return
-//	}
-//
-//	err := stream.unmarshaler.Unmarshal(errBytes, &errResp)
-//	if err != nil {
-//		errResp = nil
-//	}
-//
-//	return
-// }
 
 // ReadEvent scans the EventStream for events.
 func (stream *EventStreamReader) ReadEvent() ([]byte, error) {

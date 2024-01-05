@@ -5,9 +5,9 @@ import (
 )
 
 const (
-	// baiduaiAPIURLv1                = "https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop"
-	baiduaiAPIURLv1                = "https://aip.baidubce.com/oauth/2.0/token"
-	defaultEmptyMessagesLimit uint = 300
+	baiduaiAPIURLv1           = "https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop"
+	defaultEmptyMsgLimit uint = 300
+	grantType                 = "client_credentials"
 )
 
 // ClientConfig is a configuration of a client.
@@ -21,7 +21,7 @@ type ClientConfig struct {
 	BaseURL    string
 	HTTPClient *http.Client
 
-	EmptyMessagesLimit uint
+	EmptyMsgLimit uint
 
 	AutoAuthToken bool   // 是否自动刷新 auth token。如果 true，那最好使用一个全局的 client
 	AuthAPI       string // 授权 api
@@ -32,29 +32,29 @@ func DefaultConfig(clientId string, clientSecret string, auto bool) ClientConfig
 		authToken:    "",
 		ClientId:     clientId,
 		ClientSecret: clientSecret,
-		GrantType:    "client_credentials",
+		GrantType:    grantType,
 
 		BaseURL: baiduaiAPIURLv1,
 
 		HTTPClient: &http.Client{},
 
-		EmptyMessagesLimit: defaultEmptyMessagesLimit,
+		EmptyMsgLimit: defaultEmptyMsgLimit,
 
 		AutoAuthToken: auto,
 	}
 }
 
-func DefaultConfigWithAuth(authToken string) ClientConfig {
+func ConfigWithToken(authToken string) ClientConfig {
 	return ClientConfig{
 		authToken: authToken,
 
-		GrantType: "client_credentials",
+		GrantType: grantType,
 
 		BaseURL: baiduaiAPIURLv1,
 
 		HTTPClient: &http.Client{},
 
-		EmptyMessagesLimit: defaultEmptyMessagesLimit,
+		EmptyMsgLimit: defaultEmptyMsgLimit,
 	}
 }
 

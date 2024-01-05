@@ -11,6 +11,14 @@ import (
 	"github.com/gtkit/llm-baidu/internal/sse"
 )
 
+const MaxBufferSize = 4096
+
+type StreamReader interface {
+	Recv() (response ChatCompletionResponse, err error)
+	unmarshalError() (errResp *ErrorResponse)
+	Close()
+}
+
 type streamReader struct {
 	isFinished bool
 
@@ -20,8 +28,8 @@ type streamReader struct {
 	unmarshaler    utils.Unmarshaler
 }
 
-func newStreamReader(response *http.Response, emptyMessagesLimit uint) *streamReader {
-	reader := sse.NewEventStreamReader(bufio.NewReader(response.Body), 4096, emptyMessagesLimit)
+func newStreamReader(response *http.Response, emptyMsgLimit uint) StreamReader {
+	reader := sse.NewEventStreamReader(bufio.NewReader(response.Body), MaxBufferSize, emptyMsgLimit)
 
 	return &streamReader{
 		reader:         reader,

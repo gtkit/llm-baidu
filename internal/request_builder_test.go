@@ -39,6 +39,7 @@ func TestRequestBuilderReturnsRequest(t *testing.T) {
 		want, _     = http.NewRequestWithContext(ctx, method, url, bytes.NewBuffer(reqBytes))
 	)
 	got, _ := b.Build(ctx, method, url, request, nil)
+	t.Logf("got------%+v\n", got)
 	if !reflect.DeepEqual(got.Body, want.Body) ||
 		!reflect.DeepEqual(got.URL, want.URL) ||
 		!reflect.DeepEqual(got.Method, want.Method) {
@@ -55,6 +56,7 @@ func TestRequestBuilderReturnsRequestWhenRequestOfArgsIsNil(t *testing.T) {
 	)
 	b := NewRequestBuilder()
 	got, _ := b.Build(ctx, method, url, nil, nil)
+	t.Logf("got------%+v\n", got)
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("Build() got = %v, want %v", got, want)
 	}

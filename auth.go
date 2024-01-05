@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-const authApi = "https://aip.baidubce.com/oauth/2.0/token"
+const authAPI = "https://aip.baidubce.com/oauth/2.0/token"
 
 type AuthRequest struct {
 	GrantType    string `json:"grant_type"`
@@ -24,8 +24,8 @@ type AuthResponse struct {
 
 type AuthToken struct {
 	token     string
-	expiresAt int64
-	expiresIn int64
+	expiresAt int64 // 到期时间
+	expiresIn int64 // 有效期
 }
 
 func (t *AuthToken) IsValid() bool {
@@ -47,7 +47,7 @@ func (c *Client) CreateAccessToken(ctx context.Context) (response AuthResponse, 
 
 // RequestAccessToken — API call to Create a completion for the chat message.
 func (c *Client) RequestAccessToken(ctx context.Context, request AuthRequest) (response AuthResponse, err error) {
-	api := authApi
+	api := authAPI
 	if c.config.AuthAPI != "" {
 		api = c.config.AuthAPI
 	}
@@ -68,12 +68,13 @@ func (c *Client) RequestAccessToken(ctx context.Context, request AuthRequest) (r
 	return
 }
 
-// AutoHandleAccessToken — API call to Create a completion for the chat message.
+// AutoHandleAccessToken 获取access_token.
 func (c *Client) AutoHandleAccessToken(ctx context.Context) error {
 	if c.authToken.IsValid() {
 		return nil
 	}
 
+	// 生成新的token.
 	resp, err := c.CreateAccessToken(ctx)
 	if err != nil {
 		return errors.New("create access token error: " + err.Error())

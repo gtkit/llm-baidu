@@ -7,27 +7,28 @@ import (
 
 func TestChatCompletion(t *testing.T) {
 	ctx := context.Background()
-	client := NewClient("xxxx", "yyyy", true)
-	resp, err := client.CreateChatCompletion(ctx, ChatCompletionRequest{
-		Messages: []ChatCompletionMessage{
-			{
-				Role:    ChatMessageRoleUser,
-				Content: "Hello!",
-			},
+	client := NewClient(ClientId, ClientSecret, true)
+	prompt := []ChatCompletionMessage{
+		{
+			Role:    ChatMessageRoleUser,
+			Content: "Go 语言发展前景!",
 		},
+	}
+	resp, err := client.CreateChatCompletion(ctx, ChatCompletionRequest{
+		Messages:    prompt,
 		Temperature: 0.7,
 		Stream:      false,
 		UserId:      "",
 	})
 
 	if err != nil {
-		println(err.Error())
+		t.Log(err.Error())
 	}
 
-	println(resp.ErrorMsg)
+	t.Log(resp.ErrorMsg)
 	if resp.ErrorCode != 0 {
-		println(resp.ErrorMsg)
+		t.Log(resp.ErrorMsg)
 	}
 
-	println(resp.Result)
+	t.Log(resp.Result)
 }

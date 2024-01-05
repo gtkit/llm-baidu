@@ -1,1 +1,1 @@
-package baidu_test
+package baidu
