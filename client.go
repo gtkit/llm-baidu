@@ -12,6 +12,8 @@ import (
 	utils "github.com/gtkit/llm-baidu/internal"
 )
 
+var _ ChatCompletion = (*Client)(nil)
+
 type ChatCompletion interface {
 	// CreateChatCompletionStream sse 流式
 	CreateChatCompletionStream(ctx context.Context, request ChatCompletionRequest, args ...any) (stream *ChatCompletionStream, err error) //nolint:lll
